@@ -37,7 +37,7 @@ library(openxlsx)
 library(utf8)
 #update.packages()
 
-#--------------------------Read, write and load the tweets-------------------------------------------
+#--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
 
 data_file <- openxlsx::read.xlsx("WhiteSupremacytweets.xlsx" , colNames= F)
 
@@ -56,7 +56,7 @@ emoji_name_pouch <- c() #empty vector to collect all emojis names
 emoji_json_file <- "https://raw.githubusercontent.com/ToadHanks/emojisLib_json/master/emojis.json"
 json_data <- rjson::fromJSON(paste(readLines(emoji_json_file), collapse = "")) #read line by line make 
 
-#---------------------------------json function-----------------------------------------
+#-----------------------------------------------------json function-------------------------------------------------------------
 #(optional)function to give emoji name if you pass the unicode or emoji as a character. 
 #i.e. get_name_from_emoji("😋") output should be "yum"
 
@@ -102,7 +102,7 @@ for(i in 1: length(emoji_pouch_copy)){
 
 emoji_name_pouch[is.na(emoji_name_pouch)] <- "0" #This makes easy to spot if there is NA fields in the names section
 
-#-----------------------------------------------Readying for Network Graph----------------------------------------------
+#-----------------------------------------------Readying for Network Graph--------------------------------------------------------------------------  
 
 emo_nodes <- unique(emoji_pouch_copy) # This can be further shorten to only include emojis with freq. > 1 or somthing
 
@@ -179,7 +179,7 @@ emogg_d3 <- forceNetwork(
 
 htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 
- plot the static graph
+#plot the static graph
 plot.igraph(
      igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), 
      vertex.label= V(emogg[[biggest_subgroup]])$name, 
