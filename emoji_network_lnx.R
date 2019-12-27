@@ -37,7 +37,7 @@ library(openxlsx)
 library(utf8)
 #update.packages()
 
-#--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
+#----------------------------------------------Read, write and load the tweets----------------------------------------------------
 
 data_file <- openxlsx::read.xlsx("WhiteSupremacytweets.xlsx" , colNames= F)
 
@@ -90,24 +90,24 @@ emoji_pouch_copy<- unlist(emoji_pouch, recursive = TRUE) #makes a copy of emoji_
 
 #you can see the emo package content if your uncomment this (OPTIONAL)
 #
-# keywords <- emo::ji_keyword
-# keywords <- keywords[length(keywords)>1]
-# emojis <- purrr::map_chr(keywords, function(x) paste0(emo::ji_name[x], collapse = ""))
-# emojis
+#keywords <- emo::ji_keyword
+#keywords <- keywords[length(keywords)>1]
+#emojis <- purrr::map_chr(keywords, function(x) paste0(emo::ji_name[x], collapse = ""))
+#emojis
 
 #extract the keywords per emojis
 for(i in 1: length(emoji_pouch_copy)){
   emoji_name_pouch <- c(emoji_name_pouch, get_name_from_emoji(emoji_pouch_copy[i]))
 }
 
-emoji_name_pouch[is.na(emoji_name_pouch)] <- "0" #This makes easy to spot if there is NA fields in the names section
+emoji_name_pouch[is.na(emoji_name_pouch)] <- "0" # This makes easy to spot if there is NA fields in the names section
 
-#-----------------------------------------------Readying for Network Graph--------------------------------------------------------------------------  
+#-----------------------------------------------Readying for Network Graph---------------------------------------------------
 
 emo_nodes <- unique(emoji_pouch_copy) # This can be further shorten to only include emojis with freq. > 1 or somthing
 
 emo_mat <- matrix(emoji_pouch_copy, ncol = 2, byrow = T) #Uncomment this one to get only emojis themselves
-#emo_mat <- matrix(emoji_name_pouch, ncol = 2, byrow = T) #Uncomment this to get the emoji keywords 
+#emo_mat <- matrix(emoji_name_pouch, ncol = 2, byrow = T) #Uncomment this to get the emoji keywords (Mainly for Windows OS)
 
 links <- data.frame(
           source= emo_mat[,1], target= emo_mat[,2]
@@ -116,7 +116,7 @@ links <- data.frame(
 #links <- as.matrix(links)
 #View(links)
 
-# write the weighted edglist/network to a file
+#write the weighted edglist/network to a file
 relations <- links %>%
   group_by(source, target) %>%
   count() 
@@ -140,7 +140,7 @@ write.graph(emogg, "graphml_edgeList.graphml", "graphml") #writes a graphml file
 emogg <- decompose.graph(emogg) #splits all of the graph objects into subgroups
 vcount_indices <- c() 
 
-#here we capture the biggest subgroup
+#Here we capture the biggest subgroup
 for(i in 1:length(emogg)){
   vcount_indices <- c(vcount_indices, vcount(emogg[[i]]))
 }
@@ -150,7 +150,7 @@ biggest_subgroup <- which.max(vcount_indices) #make the index of biggest subgrou
 png(filename = "static_networkGraph.png", width = 10000, height = 10000, res = 150)
 
 #setting up the network attributes
-# par(mfrow= c(1,2), cex= 1.25)
+#par(mfrow= c(1,2), cex= 1.25)
 V(emogg[[biggest_subgroup]])$size <- 1
 V(emogg[[biggest_subgroup]])$color <- "skyblue" 
 V(emogg[[biggest_subgroup]])$frame.color <- "white"
@@ -179,7 +179,7 @@ emogg_d3 <- forceNetwork(
 
 htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 
-#plot the static graph
+#Plot the static graph
 plot.igraph(
      igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), 
      vertex.label= V(emogg[[biggest_subgroup]])$name, 
