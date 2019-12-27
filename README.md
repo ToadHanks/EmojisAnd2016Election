@@ -28,6 +28,6 @@ To aid an open-to-all research project in USF's Data Science & Analytics from th
 
 Special Thanks
 ---------------
-Dr. Hagen Loni, Assistant Professor, USF
-Dr. Thomas Keller, Researcher, USF
-Ms. Mary Falling, Masters, USF
+Dr. Hagen Loni, Assistant Professor, USF  
+Dr. Thomas Keller, Researcher, USF  
+Ms. Mary Falling, Masters, USF  
