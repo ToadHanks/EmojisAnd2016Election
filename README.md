@@ -6,7 +6,7 @@ Project Discription
 --------------------
 This project contains a fairly big random sample of tweets which were made during 2016 USA election (presidential, house, senate, etc.). With that sample, I am making a network graph of emojis to comprehend whether emojis depicts the nature of extreminism.  
 
-*Confidential information things such as the username, name and gender are hidden.*
+*Confidential information such as the username, name and gender are hidden.*
 
 Status
 -------
