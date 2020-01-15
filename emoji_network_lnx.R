@@ -219,6 +219,30 @@ for(i in 1: length(emoji_keywords_pouch)){
 }
 emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
 
+############################################################### Tf-idf stuff ##############################################
+
+#library(dplyr)
+#library(tidytext)
+library(tm)
+#install.packages("tidyr")
+library(tidyr)
+
+TagSet <- data.frame(emoji_pouch_copy)
+colnames(TagSet) <- "emoticon"
+
+TextSet <- data.frame(data_context)
+colnames(TextSet) <- "tweet"
+
+myCorpus <- tm::Corpus(tm::VectorSource(TextSet$tweet))
+tdm <- tm::TermDocumentMatrix(myCorpus, control= list(stopwords=TRUE))
+
+tdm_onlytags <- tdm[rownames(tdm)%in%TagSet$emoticon, ]
+
+#tm::inspect(tdm_onlytags)
+View(as.matrix(tdm_onlytags[1:tdm_onlytags$nrow, 1:tdm_onlytags$ncol]))
+
+############################################################################################################################
+
 #-----------------------------------------------Readying for Network Graph------------------------------------------------------------------------  
 
 #emo_nodes <- unique(emoji_pouch_copy) # pouch can be further shorten to only include emojis with freq. > 1 or somthing
@@ -304,7 +328,7 @@ igraph::V(emogg[[biggest_subgroup]])$size <- 1
 igraph::V(emogg[[biggest_subgroup]])$color <- "skyblue" 
 igraph::V(emogg[[biggest_subgroup]])$frame.color <- "white"
 igraph::E(emogg[[biggest_subgroup]])$arrow.mode <- 0
-igraph::V(emogg[[biggest_subgroup]])$label.cex <- seq(0.5,5,length.out = 6)   #XXXXX
+igraph::V(emogg[[biggest_subgroup]])$label.cex <- seq(0.5,5,length.out = 6)#XXXXX
 
 isolated <- igraph::degree(igraph::simplify(emogg[[biggest_subgroup]]))==0
 #main <- induced_subgraph(emogg[[biggest_subgroup]], V(emogg[[biggest_subgroup]])[components(emogg[[biggest_subgroup]])$membership == which.max(components(emogg[[biggest_subgroup]])$csize)])
@@ -314,19 +338,21 @@ clustors <- igraph::cluster_walktrap(emogg[[biggest_subgroup]])
 members <- igraph::membership(clustors)
 emogg_html <- igraph_to_networkD3(igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), group = members)
 
+
 emogg_d3 <- forceNetwork(
-           Links = emogg_html$links,
-           Nodes = emogg_html$nodes,
-           Source = 'source',
-           Target = 'target',
-           NodeID = 'name',
-           Group = 'group',
-           opacity = 0.9,
-           opacityNoHover = 1,
-           zoom = T,
-           linkColour = "#ababab",
-           colourScale = JS("d3.scaleOrdinal(d3.schemeCategory20);")
-        )
+         Links = emogg_html$links,
+         Nodes = emogg_html$nodes,
+         Source = 'source',
+         Target = 'target',
+         NodeID = 'name',
+         Group = 'group',
+         opacity = 0.9,
+         #Nodesize = #emogg_html$nodes$'value', missing, maybe igraph broke??
+         opacityNoHover = 1,
+         zoom = T,
+         linkColour = "#ababab",
+         colourScale = JS("d3.scaleOrdinal(d3.schemeCategory20);")
+      )
 
 htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 
@@ -347,4 +373,4 @@ plot.igraph(
      layout = layout_with_fr(emogg[[biggest_subgroup]]),
 )
 dev.off()
-  
+      
