@@ -1,22 +1,15 @@
-#Some of these you won't need it, but I am sure many of these are necessary
 #setwd(getwd())
 options(warn = -1)
 options(stringsAsFactors = FALSE)
-#install.packages("openssl")
+library(usethis)
 library(devtools)
 library(NLP)
-#install.packages("tm")
-library(tm)
 #install.packages("igraph")
 library(igraph)
-library(tidygraph) #maybe useful if igraph fails???
-#install.packages("qgraph")
-library(qgraph)
 library(htmltools)
 #install.packages("networkD3")
 library(networkD3)
 library(htmlwidgets)
-library(ggplot2)
 #install.packages("dplyr")
 library(dplyr)
 #install_github("juliasilge/tidytext")
@@ -31,9 +24,6 @@ library(readr)
 library(data.table)
 #install.packages("stringr")
 library(stringr)
-#install_github("geoffjentry/twitteR")
-#library(twitteR)
-library(stringr)
 library(rjson)
 #install.packages("remotes")
 #remotes::install_github("hadley/emo")
@@ -43,30 +33,94 @@ library(openxlsx)
 library(utf8)
 #devtools::install_github( "ThinkRstat/utf8splain")
 library(utf8splain)
-library(dplyr)
 #devtools::install_github("quanteda/quanteda") 
 library(quanteda)
+library(readtext)
+library(stm)
+#devtools::install_github("kbenoit/quantedaData")
+library(quantedaData)
 #update.packages()
 
 #--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
 
 data_file <- openxlsx::read.xlsx("WhiteSupremacytweets.xlsx" , colNames= F)
 
-colnames(data_file) <- c("username", "Pro0_Anti1", "name", "bio", "dateTime", "NA", "tweet")
+colnames(data_file) <- c("username", "group", "name", "bio", "dateTime", "max_id", "tweet")
+
+#assign the group tag
+data_file[data_file == 0] <- "Pro" 
+data_file[data_file == 1] <- "Anti"
 
 #---------------------------------------------------------Split the Anti & Pro People------------------------------------------------------
-data_file_all_pro <- subset(data_file, Pro0_Anti1 == 0)
-data_file_all_anti <- subset(data_file, Pro0_Anti1 == 1)
+data_file_all_pro <- subset(data_file, Pro0_Anti1 == Pro)
+data_file_all_anti <- subset(data_file, Pro0_Anti1 == Anti)
 
 # readr::write_excel_csv(data_file_all_pro,"Pro_WhiteSupremacytweets.csv", col_names = T) #write a PRO UTF file
 # readr::write_excel_csv(data_file_all_anti,"Anti_WhiteSupremacytweets.csv", col_names = T) #write an ANTI UTF file
 
-#------------------------------------------------------------------------------------------------------------------------------------------
-#data_context <- data_file$tweet #tweet texts COMBINED analysis!
-#data_context <- data_file$bio
-#data_context <- data_file_all_pro$tweet #Uncomment this for PRO tweets!
-data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
+#-----------------------------------------------------------quanteda structural topic models--------------------------------------------------------
+#Structural Topic Models
 
+data_file_all_pro <- data_file_all_pro %>% dplyr::select(bio, tweet)
+data_file_all_pro <- data_file_all_pro[1:60,] #add a column for party
+
+data_file_all_anti <- data_file_all_anti %>% dplyr::select(bio, tweet)
+data_file_all_anti <- data_file_all_anti[1:60,] #add a column for party
+
+
+# pro_corpus <- quanteda::corpus(data_file_all_pro$tweet, docvars= data_file_all_pro) #change to tweet
+# anti_corpus <- quanteda::corpus(data_file_all_anti$tweet, docvars= data_file_all_anti)
+# 
+# pro_dfm <- quanteda::dfm(pro_corpus,
+#                          stem= T,
+#                          #remove= stopwords("english"),
+#                          #remove_numbers= T,
+#                          #remove_punct= T
+#                          )
+# 
+# anti_dfm <- quanteda::dfm(anti_corpus,
+#                          stem= T,
+#                          #remove= stopwords("english"),
+#                          #remove_numbers= T,
+#                          #remove_punct= T
+# )
+# 
+# pro_dfm <- quanteda::dfm_trim(pro_dfm, min_termfreq = 3, min_docfreq = 5) #keep an eye on this
+# anti_dfm <- quanteda::dfm_trim(anti_dfm, min_termfreq = 3, min_docfreq = 5) #keep an eye on this
+# 
+# pro_dfm_stm <- quanteda::convert(pro_dfm, to= "stm", docvars= docvars(pro_corpus)) 
+# anti_dfm_stm <- quanteda::convert(anti_dfm, to= "stm", docvars= docvars(anti_corpus)) 
+# 
+# 
+# system.time(
+#   pro_stm_object <- stm::stm(documents = pro_dfm_stm$documents,
+#                          vocab = pro_dfm_stm$vocab,
+#                          data = pro_dfm_stm$meta,
+#                          #prevalence = ~group
+#                          K = 5,
+#                          seed = 12345)
+# ) 
+# 
+# 
+# system.time(
+#   anti_stm_object <- stm::stm(documents = anti_dfm_stm$documents,
+#                              vocab = anti_dfm_stm$vocab,
+#                              data = anti_dfm_stm$meta,
+#                              #prevalence = ~group
+#                              K = 5,
+#                              seed = 12345)
+# ) 
+
+#par(mfrow=c(1,2))
+#plot(pro_stm_object, main= "Pro group")
+#plot(anti_stm_object, main= "Anti group")
+#dev.off()
+
+
+#-------------------------------------------------------- extract the emojis-----------------------------------------------------
+data_context <- data_file$tweet #tweet texts COMBINED analysis!
+#data_context <- data_file_all_pro$tweet #Uncomment this for PRO tweets!
+#data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
 
 dt_result <- gsub("[\\x{0000}-\\x{FFFF}]+","",data_context, perl = TRUE) #Extacts all the unicode from a column
 
@@ -83,7 +137,7 @@ json_data <- rjson::fromJSON(paste(readLines(emoji_json_file), collapse = "")) #
 #(requied)function to give emoji name if you pass the unicode or emoji as a character. 
 #i.e. get_name_from_emoji("😋") output should be "yum"
 
-get_name_from_emoji <- function(emoji_unicode, emoji_data = json_data) {
+get_name_from_emoji <<- function(emoji_unicode, emoji_data = json_data) {
   
   emoji_evaluated <- stringi::stri_unescape_unicode(emoji_unicode) 
 
@@ -101,17 +155,14 @@ get_name_from_emoji <- function(emoji_unicode, emoji_data = json_data) {
   return(name_of_emoji)
 }
 
-
 #extract all of the emojis line by line, and fill the emoji pouch
-# for(i in 1:length(dt_result)){
-# emoji_pouch <- c(emoji_pouch,emo::ji_extract_all(dt_result[i])) 
-# } 
+
 for(i in seq(dt_result)){
   emoji_pouch <- c(emoji_pouch,emo::ji_extract_all(dt_result[i])) 
 }
 
 emoji_pouch <- Filter(length, emoji_pouch) #Remove the character(0) or rows with NA, it occurs due to the package
-
+#View(emoji_pouch)
 emoji_pouch_copy <- unlist(emoji_pouch, recursive = TRUE) #makes a copy of emoji_pouch, and converts to a vector
 
 ############### Gephi experiment! This whole portion gets the emoji unicode, their picture,& give them their unicode names ####################
@@ -143,6 +194,7 @@ emoji_pouch_copy <- unlist(emoji_pouch, recursive = TRUE) #makes a copy of emoji
 # emojis_with_unis <- data.frame(all_runes_unicode, emoji_pouch_copy)
 
 #make the pictures and assign their unicodes into a folder in homedirectory-> pics
+
 # emojiPlot <- function(photo_enc, emo_char){
 #   par(bg= "transparent")
 #   png(paste0("pics/",photo_enc, ".png"))
@@ -161,20 +213,16 @@ emoji_pouch_copy <- unlist(emoji_pouch, recursive = TRUE) #makes a copy of emoji
 #############################################################################################################################################
 
 #extract the keywords per emojis
-f# for(i in 1: length(emoji_pouch_copy)){
-#   emoji_keywords_pouch <- c(emoji_keywords_pouch, get_name_from_emoji(emoji_pouch_copy[i]))
-# 
 
 for(i in seq(emoji_pouch_copy)){
   emoji_keywords_pouch <- c(emoji_keywords_pouch, get_name_from_emoji(emoji_pouch_copy[i]))
 }
 emoji_keywords_pouch[is.na(emoji_keywords_pouch)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
 
-
 #------------------------------------------------- Trim the colored emojis to reduce clutter -----------------------------------------------
 
 #Function to remove the skin tones
-remove_all_skins <- function(string, pattern) {
+remove_all_skins <<- function(string, pattern) {
   str_replace_all(string, pattern, "000")
 }
 
@@ -199,7 +247,7 @@ emoji_keywords_pouch <- stringr::str_remove_all(emoji_keywords_pouch, skin_tones
 #(requied)function to give emoji name if you pass the unicode or emoji as a character. 
 #i.e. get_name_from_emoji("yum") output should be "😋"
 
-get_emoji_from_name <- function(emoji_name, emoji_data = json_data) {
+get_emoji_from_name <<- function(emoji_name, emoji_data = json_data) {
 
   vector_of_emoji_names_and_characters <- unlist(
     lapply(json_data, function(x){
@@ -219,36 +267,61 @@ get_emoji_from_name <- function(emoji_name, emoji_data = json_data) {
 #reset the original emoji_...copy to include standard tones
 emoji_pouch_copy <- c()
 
-fo# for(i in 1: length(emoji_keywords_pouch)){
-#   # print(emoji_keywords_pouch[i])
-#   # print(get_emoji_from_name(emoji_keywords_pouch[i]))
-#   # Sys.sleep(1)
-#   emoji_pouch_copy <- c(emoji_pouch_copy, get_emoji_from_name(emoji_keywords_pouch[i]))
-# emfor(i in seq(emoji_keywords_pouch)){
+for(i in seq(emoji_keywords_pouch)){
   # print(emoji_keywords_pouch[i])
   # print(get_emoji_from_name(emoji_keywords_pouch[i]))
   # Sys.sleep(1)
   emoji_pouch_copy <- c(emoji_pouch_copy, get_emoji_from_name(emoji_keywords_pouch[i]))
 }
-oji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
+
+emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
+
+
+#---------------------------------------------------------- quanteda SBS, HC, SDP-----------------------------------
+#Similarities between texts
+
+
+#hierarchical clustering
+
+
+#Scaling document positions
+
+
 
 #----------------------------------------------------------Tf-idf stuff---------------------------------------------
 
-TagSet <- data.frame(emoticon= emoji_pouch_copy, stringsAsFactors = F)
+TagSet <- data.frame(emoticon= unique(emoji_pouch_copy), stringsAsFactors = F) #unique ()???? Terms!!!
 
 TextSet <- data.frame(tweet = data_context, stringsAsFactors = F)
 
-#MUCH BETTER APPROACH than tm!
-
 tweets_dfm <- quanteda::dfm(TextSet$tweet)
-tf_idf <- tweets_dfm %>% 
+
+tf_idf_mat <- tweets_dfm %>% 
   quanteda::dfm_select(TagSet$emoticon) %>% # only leave emoticons in the dfm
   quanteda::dfm_tfidf() %>%                 # weight with tfidf
   quanteda::convert("data.frame")      # turn into data.frame to display more easily
 
-#View(tf_idf)
+#View(tf_idf_mat)
 
-############################################################################################################################
+######################################## One Column tf-idf##############################
+
+col_sum <- colSums(tf_idf_mat[,-1]) #get the column sum for emoitcons
+col_sum_names <- names(col_sum) #get the emoticons
+col_zeroes <- colSums(tf_idf_mat[,-1] > 0) #get the frequency of where emoticons appears
+total_documents <- nrow(tf_idf_mat[1]) #get the total documents
+
+one_tf_idf <- c() #empty vector to keep aggregated tf-idf
+
+#do the Summation(of emoticon at i) * logbase10(total documents / freq(of emoticon at i))
+for(i in seq(col_sum)){
+  one_tf_idf <- c(one_tf_idf, col_sum[[i]]*(log10(total_documents/col_zeroes[[i]])))
+}
+one_tf_idf <- data.frame(emoticons= col_sum_names, tf_idf= one_tf_idf)  #plan is to add a sweet spot and remove big guys
+one_tf_idf <- one_tf_idf[order(one_tf_idf$tf_idf, decreasing = T),]
+
+#View(one_tf_idf)
+
+##########################################################
 
 #-----------------------------------------------Readying for Network Graph------------------------------------------------------------------------  
 
@@ -321,13 +394,12 @@ emogg <- igraph::decompose.graph(emogg) #splits all of the graph objects into su
 vcount_indices <- c() 
 
 #here we capture the biggest subgroup
-fo# for(i in 1:length(emogg)){
-#   vcount_indices <- c(vcount_indices, igraph::vcount(emogg[[i]]))
-# bifor(i in seq(emogg)){
+
+for(i in seq(emogg)){
   vcount_indices <- c(vcount_indices, igraph::vcount(emogg[[i]]))
 }
 
-ggest_subgroup <- which.max(vcount_indices) #make the index of biggest subgroup
+biggest_subgroup <- which.max(vcount_indices) #make the index of biggest subgroup
 
 #Resolution has to be big to spread the nodes properly
 png(filename = "static_networkGraph.png", width = 10000, height = 10000, res = 150)
@@ -349,7 +421,7 @@ members <- igraph::membership(clustors)
 emogg_html <- igraph_to_networkD3(igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), group = members)
 
 
-emogg_d3 <- forceNetwork(
+emogg_d3 <- networkD3::forceNetwork(
          Links = emogg_html$links,
          Nodes = emogg_html$nodes,
          Source = 'source',
@@ -370,7 +442,6 @@ htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 # deg <- degree(emogg_copy, mode = "all")
 # View(deg)
 
-
 #plot the static graph
 plot.igraph(
      igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), 
@@ -380,6 +451,7 @@ plot.igraph(
      ylim = c(-18,18),
      xlim = c(-18,18),
      asp = 0,
-     layout = layout_with_fr(emogg[[biggest_subgroup]]),
+     layout = igraph::layout_with_fr(emogg[[biggest_subgroup]]),
 )
 dev.off()
+  
