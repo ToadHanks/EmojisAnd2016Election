@@ -39,6 +39,10 @@ library(readtext)
 library(stm)
 #devtools::install_github("kbenoit/quantedaData")
 library(quantedaData)
+#install.packages("rgl", dependencies = TRUE)
+#devtools::install_url('https://cran.r-project.org/src/contrib/Archive/rowr/rowr_1.1.3.tar.gz')
+library(rowr)
+library(dplyr)
 #update.packages()
 
 #--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
@@ -52,8 +56,8 @@ data_file[data_file == 0] <- "Pro"
 data_file[data_file == 1] <- "Anti"
 
 #---------------------------------------------------------Split the Anti & Pro People------------------------------------------------------
-data_file_all_pro <- subset(data_file, Pro0_Anti1 == Pro)
-data_file_all_anti <- subset(data_file, Pro0_Anti1 == Anti)
+data_file_all_pro <- subset(data_file, group == "Pro")
+data_file_all_anti <- subset(data_file, group == "Anti")
 
 # readr::write_excel_csv(data_file_all_pro,"Pro_WhiteSupremacytweets.csv", col_names = T) #write a PRO UTF file
 # readr::write_excel_csv(data_file_all_anti,"Anti_WhiteSupremacytweets.csv", col_names = T) #write an ANTI UTF file
@@ -61,11 +65,9 @@ data_file_all_anti <- subset(data_file, Pro0_Anti1 == Anti)
 #-----------------------------------------------------------quanteda structural topic models--------------------------------------------------------
 #Structural Topic Models
 
-data_file_all_pro <- data_file_all_pro %>% dplyr::select(bio, tweet)
-data_file_all_pro <- data_file_all_pro[1:60,] #add a column for party
+data_file_all_pro <- data_file_all_pro %>% dplyr::select(tweet) #%>% dplyr::select(bio, tweet)
 
-data_file_all_anti <- data_file_all_anti %>% dplyr::select(bio, tweet)
-data_file_all_anti <- data_file_all_anti[1:60,] #add a column for party
+data_file_all_anti <- data_file_all_anti %>% dplyr::select(tweet) #%>% dplyr::select(bio, tweet)
 
 
 # pro_corpus <- quanteda::corpus(data_file_all_pro$tweet, docvars= data_file_all_pro) #change to tweet
@@ -118,9 +120,11 @@ data_file_all_anti <- data_file_all_anti[1:60,] #add a column for party
 
 
 #-------------------------------------------------------- extract the emojis-----------------------------------------------------
-data_context <- data_file$tweet #tweet texts COMBINED analysis!
-#data_context <- data_file_all_pro$tweet #Uncomment this for PRO tweets!
-#data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
+#this variable is VERY IMPORTANT if you're doing group based analysis comment and uncomment based on your analysis!
+
+#data_context <- data_file$tweet #tweet texts COMBINED analysis!
+#data_context <-  data_file_all_pro$tweet #Uncomment this for PRO tweets!
+data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
 
 dt_result <- gsub("[\\x{0000}-\\x{FFFF}]+","",data_context, perl = TRUE) #Extacts all the unicode from a column
 
@@ -278,17 +282,82 @@ emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if the
 
 
 #---------------------------------------------------------- quanteda SBS, HC, SDP-----------------------------------
-#Similarities between texts
+#Sort of a DRY approach, you have to comment/uncomment relevant variable based on which you using. One has to be commented
+#otherwise they will get overwritten.
 
+pro_emojis <- emoji_pouch_copy
+anti_emojis <- emoji_pouch_copy
+
+#Similarities between texts (watch for comment and uncomment group tags)
+similar_emojis <- data.frame(matches= dplyr::intersect(pro_emojis, anti_emojis))
+#readr::write_excel_csv(similar_emojis,"group_similarity_texts.csv", col_names = T) #similarity files
+
+#Unique emojis between groups
+outersect <<- function(x, y) {
+  sort(c(x[!x%in%y],
+         y[!y%in%x]))
+}
+
+unique_emojis <- data.frame(unique= unique(outersect(pro_emojis, anti_emojis)))
+#readr::write_excel_csv(unique_emojis,"group_dissimilarity_texts.csv", col_names = T) #dissimilarity files
+
+unique_by_group <<- function(x, y) {
+  pro <- unique(x[!x%in%y])
+  anti <- unique(y[!y%in%x])
+  data.frame(rowr::cbind.fill(pro, anti, fill = ''))
+}
+
+unique_to_each <- unique_by_group(pro_emojis, anti_emojis)
+colnames(unique_to_each) <- c("Pro", "Anti")
+#readr::write_excel_csv(unique_to_each,"unique_to_each_group.csv", col_names = T) #unique by group files
+
+# View(unique_to_each)
+
+####################################################### Lines of shame!! ####################################################################
+
+#dendrochrono graph pro
+# toks_pro <- quanteda::tokens(pro_emojis)
+# dfmat_pro <- quanteda::dfm(toks_pro)
+# tstat_dist <- stats::as.dist(quanteda::textstat_dist(t(dfmat_pro))) #Crash above >1000, and MUST be transposed to get emoticons
+
+#dendrochrono graph anti
+# toks_anti <- quanteda::tokens(anti_emojis)
+# dfmat_anti <- quanteda::dfm(toks_anti)
+# tstat_dist <- stats::as.dist(quanteda::textstat_dist(t(dfmat_anti))) #Crash above >1000, and MUST be transposed to get emoticons
+
+#clean the matrix
+# tstat_dist[is.na(tstat_dist)] <- 0
+# tstat_dist[is.nan(tstat_dist)] <- 0
+# sum(is.infinite(tstat_dist)) #must return 0, otherwise clus_pro won't work
 
 #hierarchical clustering
+# clust <- stats::hclust(tstat_dist, "ward.D2")
 
+#dendrogram is not that helpful in my opinion. 
 
-#Scaling document positions
+# png(filename = "dendrogram_anti.png", width = 20000, height = 15000, res = 150)
+# clust$height <- round(clust$height, 10)
+# 
+# hcd <- as.dendrogram(clust)
+# 
+# plot(hcd, xlab = "Distance", ylab = NULL,cex= 0.6) 
+# 
+# dev.off()
 
+##############################################################################################################################################
 
+#Scaling document positions, NOT GOOD
+dfmat_anti_scaling <- quanteda::dfm(anti_emojis) #t(quanteda::dfm(anti_emojis))
 
-#----------------------------------------------------------Tf-idf stuff---------------------------------------------
+tmod_wf_anti <- quanteda::textmodel_wordfish(dfmat_anti_scaling, dir= c(6,5)) #crashing >500, pair of document per word 6 to 5
+
+png(filename = "scaled_documents_anti.png", width = 20000, height = 15000, res = 150)
+
+quanteda::textplot_scale1d(tmod_wf_anti, margin = "features")
+  
+dev.off()
+
+#------------------------------------------------------------Tf-idf-stuff---------------------------------------------
 
 TagSet <- data.frame(emoticon= unique(emoji_pouch_copy), stringsAsFactors = F) #unique ()???? Terms!!!
 
@@ -305,7 +374,7 @@ tf_idf_mat <- tweets_dfm %>%
 
 ################################################### One Column tf-idf###############################################################################
 
-col_sum <- colSums(tf_idf_mat[,-1]) #get the column sum for emoitcons
+col_sum <- colSums(tf_idf_mat[,-1]) #get the column sum for emoitcons, tf_idf is big matrix of documetns and terms
 col_sum_names <- names(col_sum) #get the emoticons
 col_zeroes <- colSums(tf_idf_mat[,-1] > 0) #get the frequency of where emoticons appears
 total_documents <- nrow(tf_idf_mat[1]) #get the total documents
@@ -316,7 +385,7 @@ one_tf_idf <- c() #empty vector to keep aggregated tf-idf
 for(i in seq(col_sum)){
   one_tf_idf <- c(one_tf_idf, col_sum[[i]]*(log10(total_documents/col_zeroes[[i]])))
 }
-one_tf_idf <- data.frame(emoticons= col_sum_names, tf_idf= one_tf_idf)  #plan is to add a sweet spot and remove big guys
+one_tf_idf <- data.frame(emoticons= col_sum_names, tf_idf= one_tf_idf)  #This gives us info about most used vs most relevant
 one_tf_idf <- one_tf_idf[order(one_tf_idf$tf_idf, decreasing = T),]
 
 #View(one_tf_idf)
