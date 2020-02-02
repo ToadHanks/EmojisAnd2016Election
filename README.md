@@ -33,8 +33,9 @@ Purpose
 -------
 To aid an open-to-all research project in USF's Data Science & Analytics from the college of Information Science
 
-Special Thanks
+Collaborators
 ---------------
 Dr. Hagen Loni, Assistant Professor, USF  
-Dr. Thomas Keller, Researcher, USF  
-Ms. Mary Falling, Masters, USF  
+Dr. Thomas Keller, Field Researcher, USF  
+Ms. Mary Falling, Masters, USF 
+Mr. William (Alex) Webb, Doctor of Philosophy, USF
