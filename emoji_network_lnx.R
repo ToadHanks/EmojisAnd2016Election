@@ -43,6 +43,7 @@ library(quantedaData)
 #devtools::install_url('https://cran.r-project.org/src/contrib/Archive/rowr/rowr_1.1.3.tar.gz')
 library(rowr)
 library(dplyr)
+library(janitor)
 #update.packages()
 
 #--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
@@ -130,7 +131,9 @@ dt_result <- gsub("[\\x{0000}-\\x{FFFF}]+","",data_context, perl = TRUE) #Extact
 
 emoji_pouch <- c() #empty vector to collect all emojis
 emoji_keywords_pouch <- c() #empty vector to collect all emojis names
-
+emoji_pouch_corpus <- as.data.frame(dt_result)
+emoji_pouch_corpus <- emoji_pouch_corpus %>% mutate_all(funs(na_if(., ""))) %>% remove_empty(which= c("rows", "cols"))
+#View(emoji_pouch_corpus)
 
 #Manually add the new emojis in this json file. Download it (or push pull request in my github), read it in and same implmenetation.
 
@@ -166,7 +169,7 @@ for(i in seq(dt_result)){
 }
 
 emoji_pouch <- Filter(length, emoji_pouch) #Remove the character(0) or rows with NA, it occurs due to the package
-#View(emoji_pouch)
+
 emoji_pouch_copy <- unlist(emoji_pouch, recursive = TRUE) #makes a copy of emoji_pouch, and converts to a vector
 
 ############### Gephi experiment! This whole portion gets the emoji unicode, their picture,& give them their unicode names ####################
@@ -285,7 +288,7 @@ emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if the
 #Sort of a DRY approach, you have to comment/uncomment relevant variable based on which you using. One has to be commented
 #otherwise they will get overwritten.
 
-pro_emojis <- emoji_pouch_copy
+#pro_emojis <- emoji_pouch_copy
 anti_emojis <- emoji_pouch_copy
 
 #Similarities between texts (watch for comment and uncomment group tags)
@@ -313,7 +316,7 @@ colnames(unique_to_each) <- c("Pro", "Anti")
 
 # View(unique_to_each)
 
-####################################################### Lines of shame!! ####################################################################
+################################################### Dendrogram: Lines of shame!! ######################################################
 
 #dendrochrono graph pro
 # toks_pro <- quanteda::tokens(pro_emojis)
@@ -333,9 +336,9 @@ colnames(unique_to_each) <- c("Pro", "Anti")
 #hierarchical clustering
 # clust <- stats::hclust(tstat_dist, "ward.D2")
 
-#dendrogram is not that helpful in my opinion. 
+#DENDROGRAM IS NOT A GOOD ANALYSIS IN MY OPINION
 
-# png(filename = "dendrogram_anti.png", width = 20000, height = 15000, res = 150)
+# png(filename = "dendrogram.png", width = 20000, height = 15000, res = 150)
 # clust$height <- round(clust$height, 10)
 # 
 # hcd <- as.dendrogram(clust)
@@ -344,24 +347,13 @@ colnames(unique_to_each) <- c("Pro", "Anti")
 # 
 # dev.off()
 
-##############################################################################################################################################
+###################################################################################################################################
 
-#Scaling document positions, NOT GOOD
-dfmat_anti_scaling <- quanteda::dfm(anti_emojis) #t(quanteda::dfm(anti_emojis))
+#------------------------------------------------------------Tf-idf-stuff--------------------------------------------------------
 
-tmod_wf_anti <- quanteda::textmodel_wordfish(dfmat_anti_scaling, dir= c(6,5)) #crashing >500, pair of document per word 6 to 5
+TagSet <- data.frame(emoticon= emoji_pouch_copy, stringsAsFactors = F) #change emoticons based on group, unique() should do, pro/anti for group
 
-png(filename = "scaled_documents_anti.png", width = 20000, height = 15000, res = 150)
-
-quanteda::textplot_scale1d(tmod_wf_anti, margin = "features")
-  
-dev.off()
-
-#------------------------------------------------------------Tf-idf-stuff---------------------------------------------
-
-TagSet <- data.frame(emoticon= unique(emoji_pouch_copy), stringsAsFactors = F) #unique ()???? Terms!!!
-
-TextSet <- data.frame(tweet = data_context, stringsAsFactors = F)
+TextSet <- data.frame(tweet = emoji_pouch_corpus$dt_result, stringsAsFactors = F) 
 
 tweets_dfm <- quanteda::dfm(TextSet$tweet)
 
@@ -372,7 +364,7 @@ tf_idf_mat <- tweets_dfm %>%
 
 #View(tf_idf_mat)
 
-################################################### One Column tf-idf###############################################################################
+#------------------------------------------------------------- One Column tf-idf ------------------------------------------------
 
 col_sum <- colSums(tf_idf_mat[,-1]) #get the column sum for emoitcons, tf_idf is big matrix of documetns and terms
 col_sum_names <- names(col_sum) #get the emoticons
@@ -390,14 +382,38 @@ one_tf_idf <- one_tf_idf[order(one_tf_idf$tf_idf, decreasing = T),]
 
 #View(one_tf_idf)
 
-##################################################################################################################################################
+
+############################################################ Scaling document : AnMoreines of shame!!?? ########################
+
+#Scaling document positions, NOT GOOD AT THIS POINT
+
+#pro_emojis <- pro_emojis[pro_emojis %in% one_tf_idf$emoticons]
+#anti_emojis <- anti_emojis[anti_emojis %in% one_tf_idf$emoticons]
+  
+#dfmat_pro_scaling <- quanteda::dfm(pro_emojis) #t(quanteda::dfm(pro_emojis))
+#dfmat_anti_scaling <- quanteda::dfm(anti_emojis) #t(quanteda::dfm(anti_emojis))
+
+#tmod_wf <- quanteda::textmodel_wordfish(dfmat_pro_scaling, dir= c(6,5)) #crashing >500, pair of document per word 6 to 5
+#tmod_wf <- quanteda::textmodel_wordfish(dfmat_anti_scaling, dir= c(6,5)) #crashing >500, pair of document per word 6 to 5
+
+#png(filename = "scaled_documents.png", width = 10000, height = 10000, res = 150)
+
+#quanteda::textplot_scale1d(tmod_wf, margin = "features")
+
+#dev.off()
+
+###################################################################################################################################
 
 #-----------------------------------------------Readying for Network Graph------------------------------------------------------------------------  
 
 #emo_nodes <- unique(emoji_pouch_copy) # pouch can be further shorten to only include emojis with freq. > 1 or somthing
 
-emo_mat <- matrix(emoji_pouch_copy, ncol = 2, byrow = T) #Uncomment this one to get only emojis themselves
+#trim the emoji_pouch_copy based on one_tf_idf column
+emoji_pouch_copy <- emoji_pouch_copy[emoji_pouch_copy %in% one_tf_idf$emoticons]
+
+emo_mat <- matrix(emoji_pouch_copy, ncol = 2, byrow = T) #Uncomment this one to get only emojis themselves 
 #emo_mat <- matrix(emoji_keywords_pouch, ncol = 2, byrow = T) #Uncomment this to get the emoji keywords *windows*
+#View(emo_mat)
 
 ################################# Gephi experiment! We make a csv edgelist file in emoji unicodes ####################################################
 
@@ -428,14 +444,17 @@ links <- data.frame(
 #links <- as.matrix(links)
 #View(links)
 
-# write the weighted edglist/network to a file
+# write the weighted edglist/network to a file 
 relations <- links %>%
-  group_by(source, target) %>%
-  count() 
+  dplyr::group_by(source, target) %>%
+  dplyr::count()
+
 
 colnames(relations) <- c("from", "to", "weight")
 
 relations <- subset(relations, relations$weight != 1) #Further trimming the relations with higher edges, 0 resets. Use 0 to get EVERYTHING!
+
+#View(relations)
 
 readr::write_excel_csv(relations,"edgelist_weighted_emojis.csv") #write a UTF file WHOLE DATA
 #readr::write_excel_csv(relations,"edgelist_weighted_emojis_keywords.csv") #write a UTF file with keywords WHOLE DATA *windows*
@@ -460,6 +479,7 @@ igraph::V(emogg)[igraph::V(emogg)$indeg == max(igraph::V(emogg)$indeg)]
 #####################################################################################################################################################
 
 emogg <- igraph::decompose.graph(emogg) #splits all of the graph objects into subgroups
+
 vcount_indices <- c() 
 
 #here we capture the biggest subgroup
@@ -482,13 +502,14 @@ igraph::E(emogg[[biggest_subgroup]])$arrow.mode <- 0
 igraph::V(emogg[[biggest_subgroup]])$label.cex <- seq(0.5,5,length.out = 6)#XXXXX
 
 isolated <- igraph::degree(igraph::simplify(emogg[[biggest_subgroup]]))==0
+
 #main <- induced_subgraph(emogg[[biggest_subgroup]], V(emogg[[biggest_subgroup]])[components(emogg[[biggest_subgroup]])$membership == which.max(components(emogg[[biggest_subgroup]])$csize)])
 
 #plot the html version of the graph
 clustors <- igraph::cluster_walktrap(emogg[[biggest_subgroup]])
+
 members <- igraph::membership(clustors)
 emogg_html <- igraph_to_networkD3(igraph::delete.vertices(simplify(emogg[[biggest_subgroup]]), isolated), group = members)
-
 
 emogg_d3 <- networkD3::forceNetwork(
          Links = emogg_html$links,
@@ -522,5 +543,6 @@ plot.igraph(
      asp = 0,
      layout = igraph::layout_with_fr(emogg[[biggest_subgroup]]),
 )
+
 dev.off()
-  
+      
