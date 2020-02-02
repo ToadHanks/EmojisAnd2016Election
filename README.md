@@ -8,6 +8,11 @@ This project contains a fairly big random sample of tweets which were made durin
 
 *Confidential information such as the username, name and gender are hidden.*
 
+OS
+-----
+Linux
+
+
 Status
 -------
 Work-in-progress
