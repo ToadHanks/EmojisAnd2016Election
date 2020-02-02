@@ -23,7 +23,7 @@ R
 
 Packages
 --------
-networkD3, htmltools, igraph, dplyr, tidytext, rjson, remotes, utf8, stringi, emo, readr, openxlsx
+networkD3, htmltools, igraph, dplyr, tidytext, rjson, remotes, utf8, stringi, emo, readr, openxlsx, quanteda
 
 Author
 ------
