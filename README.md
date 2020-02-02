@@ -29,7 +29,6 @@ Author
 ------
 Mihir Patel
 
-
 Collaborators
 ---------------
 Dr. Hagen Loni, Assistant Professor, USF  
