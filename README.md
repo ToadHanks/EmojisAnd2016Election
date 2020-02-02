@@ -29,9 +29,6 @@ Author
 ------
 Mihir Patel
 
-Purpose
--------
-To aid an open-to-all research project in USF's Data Science & Analytics from the college of Information Science
 
 Collaborators
 ---------------
