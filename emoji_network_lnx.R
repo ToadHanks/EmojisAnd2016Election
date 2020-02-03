@@ -126,8 +126,8 @@ data_file_all_anti <- data_file_all_anti %>% dplyr::select(tweet) #%>% dplyr::se
 #this variable is VERY IMPORTANT if you're doing group based analysis comment and uncomment based on your analysis!
 
 #data_context <- data_file$tweet #tweet texts COMBINED analysis!
-#data_context <-  data_file_all_pro$tweet #Uncomment this for PRO tweets!
-data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
+data_context <-  data_file_all_pro$tweet #Uncomment this for PRO tweets!
+#data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
 
 dt_result <- gsub("[\\x{0000}-\\x{FFFF}]+","",data_context, perl = TRUE) #Extacts all the unicode from a column
 
@@ -285,35 +285,36 @@ for(i in seq(emoji_keywords_pouch)){
 
 emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
 
-
 #---------------------------------------------------------- quanteda SBS, HC, SDP-----------------------------------
 #Sort of a DRY approach, you have to comment/uncomment relevant variable based on which you using. One has to be commented
 #otherwise they will get overwritten.
 
 #pro_emojis <- emoji_pouch_copy
-anti_emojis <- emoji_pouch_copy
+#anti_emojis <- emoji_pouch_copy
 
 #Similarities between texts (watch for comment and uncomment group tags)
-similar_emojis <- data.frame(matches= dplyr::intersect(pro_emojis, anti_emojis))
+
+#similar_emojis <- data.frame(matches= dplyr::intersect(pro_emojis, anti_emojis))
 #readr::write_excel_csv(similar_emojis,"group_similarity_texts.csv", col_names = T) #similarity files
 
 #Unique emojis between groups
-outersect <<- function(x, y) {
-  sort(c(x[!x%in%y],
-         y[!y%in%x]))
-}
 
-unique_emojis <- data.frame(unique= unique(outersect(pro_emojis, anti_emojis)))
+# outersect <<- function(x, y) {
+#   sort(c(x[!x%in%y],
+#          y[!y%in%x]))
+# }
+
+#unique_emojis <- data.frame(unique= unique(outersect(pro_emojis, anti_emojis)))
 #readr::write_excel_csv(unique_emojis,"group_dissimilarity_texts.csv", col_names = T) #dissimilarity files
 
-unique_by_group <<- function(x, y) {
-  pro <- unique(x[!x%in%y])
-  anti <- unique(y[!y%in%x])
-  data.frame(rowr::cbind.fill(pro, anti, fill = ''))
-}
+# unique_by_group <<- function(x, y) {
+#   pro <- unique(x[!x%in%y])
+#   anti <- unique(y[!y%in%x])
+#   data.frame(rowr::cbind.fill(pro, anti, fill = ''))
+# }
 
-unique_to_each <- unique_by_group(pro_emojis, anti_emojis)
-colnames(unique_to_each) <- c("Pro", "Anti")
+# unique_to_each <- unique_by_group(pro_emojis, anti_emojis)
+# colnames(unique_to_each) <- c("Pro", "Anti")
 #readr::write_excel_csv(unique_to_each,"unique_to_each_group.csv", col_names = T) #unique by group files
 
 # View(unique_to_each)
@@ -382,8 +383,9 @@ for(i in seq(col_sum)){
 one_tf_idf <- data.frame(emoticons= col_sum_names, tf_idf= one_tf_idf)  #This gives us info about most used vs most relevant
 one_tf_idf <- one_tf_idf[order(one_tf_idf$tf_idf, decreasing = T),]
 
-#View(one_tf_idf)
+#View(one_tf_idf[one_tf_idf$tf_idf>30,])
 
+one_tf_idf <- one_tf_idf[one_tf_idf$tf_idf>30,] #trim above >30
 
 ############################################################ Scaling document : More Lines of shame!!?? ########################
 
@@ -452,9 +454,9 @@ relations <- links %>%
   dplyr::count()
 
 
-colnames(relations) <- c("from", "to", "weight")
+colnames(relations) <- c("from", "to", "weight") #interactive ones havel values instead of weight, look into that!
 
-relations <- subset(relations, relations$weight != 1 & relations$weight !=2) #Further trimming the relations with higher edges, 0 resets. Use 0 to get EVERYTHING!
+relations <- subset(relations, relations$weight != 1) #Further trimming (& relations$weight !=2) the relations with higher edges, 0 resets. Use 0 to get EVERYTHING!
 
 #View(relations)
 
@@ -529,7 +531,7 @@ emogg_d3 <- networkD3::forceNetwork(
 
 htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 
-#pdegrees of network nodes
+# degrees of network nodes
 # deg <- degree(emogg_copy, mode = "all")
 # View(deg)
 
@@ -547,7 +549,9 @@ plot.igraph(
 
 #plot the vs.js version of the graph
 emogg_visNet <- visNetwork::toVisNetworkData(igraph::delete.vertices(igraph::simplify(emogg[[biggest_subgroup]]), isolated))
-emogg_visNet$nodes$font.size <- 30
+emogg_visNet$nodes$font.size <- 40
+# emogg_visNet$nodes$color <- "maroon" #Pro people
+emogg_visNet$nodes$color <- "darkblue" #Anti people
 
 vis_it <- visNetwork::visNetwork(nodes = emogg_visNet$nodes, edges = emogg_visNet$edges, height = "1500px", width = "200%") %>%
   visNetwork::visInteraction(hideNodesOnDrag = T, dragView = T, dragNodes = T, zoomView = T) %>%
@@ -555,8 +559,15 @@ vis_it <- visNetwork::visNetwork(nodes = emogg_visNet$nodes, edges = emogg_visNe
   visNetwork::visEdges(smooth = T, arrows = "to") %>% #, length = c(100,500)
   visNetwork::visPhysics(stabilization = T)
 
-#FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISE REDUCE SIZE
+#FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISEREDUCE SIZE
 visNetwork::visSave(vis_it, file= "visIt_networkGraph.html")
 
 dev.off()
-    
+  
+
+########
+
+#rstud  io  point rester Here!
+  
+######
+ #   
