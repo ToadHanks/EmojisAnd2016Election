@@ -44,6 +44,8 @@ library(quantedaData)
 library(rowr)
 library(dplyr)
 library(janitor)
+#install.packages("visNetwork")
+library(visNetwork)
 #update.packages()
 
 #--------------------------------------------------------Read, write and load the tweets----------------------------------------------------
@@ -383,7 +385,7 @@ one_tf_idf <- one_tf_idf[order(one_tf_idf$tf_idf, decreasing = T),]
 #View(one_tf_idf)
 
 
-############################################################ Scaling document : AnMoreines of shame!!?? ########################
+############################################################ Scaling document : More Lines of shame!!?? ########################
 
 #Scaling document positions, NOT GOOD AT THIS POINT
 
@@ -452,13 +454,12 @@ relations <- links %>%
 
 colnames(relations) <- c("from", "to", "weight")
 
-relations <- subset(relations, relations$weight != 1) #Further trimming the relations with higher edges, 0 resets. Use 0 to get EVERYTHING!
+relations <- subset(relations, relations$weight != 1 & relations$weight !=2) #Further trimming the relations with higher edges, 0 resets. Use 0 to get EVERYTHING!
 
 #View(relations)
 
 readr::write_excel_csv(relations,"edgelist_weighted_emojis.csv") #write a UTF file WHOLE DATA
 #readr::write_excel_csv(relations,"edgelist_weighted_emojis_keywords.csv") #write a UTF file with keywords WHOLE DATA *windows*
-
 
 #Gets the nodes, associated edges, and weight
 links_g <- read.table(file = "edgelist_weighted_emojis.csv", header = T, sep = ",")
@@ -505,7 +506,7 @@ isolated <- igraph::degree(igraph::simplify(emogg[[biggest_subgroup]]))==0
 
 #main <- induced_subgraph(emogg[[biggest_subgroup]], V(emogg[[biggest_subgroup]])[components(emogg[[biggest_subgroup]])$membership == which.max(components(emogg[[biggest_subgroup]])$csize)])
 
-#plot the html version of the graph
+#plot the d3js version of the graph
 clustors <- igraph::cluster_walktrap(emogg[[biggest_subgroup]])
 
 members <- igraph::membership(clustors)
@@ -528,7 +529,7 @@ emogg_d3 <- networkD3::forceNetwork(
 
 htmlwidgets::saveWidget(emogg_d3, file= "interactive_networkGraph.html")
 
-#degrees of network nodes
+#pdegrees of network nodes
 # deg <- degree(emogg_copy, mode = "all")
 # View(deg)
 
@@ -544,5 +545,18 @@ plot.igraph(
      layout = igraph::layout_with_fr(emogg[[biggest_subgroup]]),
 )
 
-dev.off()
-      
+d
+#plot the vs.js version of the graph
+emogg_visNet <- visNetwork::toVisNetworkData(igraph::delete.vertices(igraph::simplify(emogg[[biggest_subgroup]]), isolated))
+emogg_visNet$nodes$font.size <- 30
+
+vis_it <- visNetwork::visNetwork(nodes = emogg_visNet$nodes, edges = emogg_visNet$edges, height = "1500px", width = "200%") %>%
+  visNetwork::visInteraction(hideNodesOnDrag = T, dragView = T, dragNodes = T, zoomView = T) %>%
+  visNetwork::visOptions(highlightNearest = T, nodesIdSelection = T, collapse = T) %>%
+  visNetwork::visEdges(smooth = T, arrows = "to") %>% #, length = c(100,500)
+  visNetwork::visPhysics(stabilization = T)
+
+#FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISEREDUCE SIZE
+visNetwork::visSave(vis_it, file= "visIt_networkGraph.html")e
+v.off()
+    
