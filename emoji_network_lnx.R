@@ -555,7 +555,7 @@ vis_it <- visNetwork::visNetwork(nodes = emogg_visNet$nodes, edges = emogg_visNe
   visNetwork::visEdges(smooth = T, arrows = "to") %>% #, length = c(100,500)
   visNetwork::visPhysics(stabilization = T)
 
-#FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISEREDUCE SIZE
+#FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISE REDUCE SIZE
 visNetwork::visSave(vis_it, file= "visIt_networkGraph.html")
 
 dev.off()
