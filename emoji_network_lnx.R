@@ -545,7 +545,6 @@ plot.igraph(
      layout = igraph::layout_with_fr(emogg[[biggest_subgroup]]),
 )
 
-d
 #plot the vs.js version of the graph
 emogg_visNet <- visNetwork::toVisNetworkData(igraph::delete.vertices(igraph::simplify(emogg[[biggest_subgroup]]), isolated))
 emogg_visNet$nodes$font.size <- 30
@@ -557,6 +556,7 @@ vis_it <- visNetwork::visNetwork(nodes = emogg_visNet$nodes, edges = emogg_visNe
   visNetwork::visPhysics(stabilization = T)
 
 #FOR JITTERNESS, MESS WITH PHYSICS and, IGRAPH LAYOUT!!! OTHERWISEREDUCE SIZE
-visNetwork::visSave(vis_it, file= "visIt_networkGraph.html")e
-v.off()
+visNetwork::visSave(vis_it, file= "visIt_networkGraph.html")
+
+dev.off()
     
