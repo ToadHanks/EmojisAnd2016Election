@@ -567,7 +567,6 @@ dev.off()
 
 ########
 
-#rstud  io  point rester Here!
+#rstudio  point rester Here!
   
-######
- #   
+#######   
