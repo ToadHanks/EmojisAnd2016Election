@@ -15,7 +15,7 @@ Linux
 
 Status
 -------
-Work-in-progress
+Revision
 
 Langauge
 ---------
