@@ -25,8 +25,8 @@ Packages
 --------
 networkD3, htmltools, igraph, dplyr, tidytext, rjson, remotes, utf8, stringi, emo, readr, visNetwork, openxlsx, quanteda, janitor, rowr
 
-Author
-------
+Programmer
+---------
 Mihir Patel
 
 Collaborators
