@@ -1,6 +1,7 @@
 Project
 --------
 Use of Emojis in Tweets During 2016 USA Elections
+*Please see plots directory to see any ideological graphs. Currently the code gives you one graph combining both group.*
 
 Project Discription
 --------------------
@@ -10,8 +11,7 @@ This project contains a fairly big random sample of tweets which were made durin
 
 OS
 -----
-Linux
-
+Unix Based only! Windows doesn't render the emojis above 0xFFFF.
 
 Status
 -------
