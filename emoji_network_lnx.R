@@ -191,8 +191,8 @@ for(i in seq(emoji_keywords_pouch)){
 emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if there are MISSING fields in the names section
 
 #---------------------------------------------------------- quanteda SBS, HC, SDP-----------------------------------
-#Sort of a DRY approach, you have to comment/uncomment relevant variable based on which you using. One has to be commented
-#otherwise they will get overwritten.
+#Sort of a dumb approach, you have to comment/uncomment relevant variable based on which you using and re-rerun from beginning with doing same thing with data$context. 
+#One has to be commented otherwise they will get overwritten.
 
 #pro_emojis <- emoji_pouch_copy
 #anti_emojis <- emoji_pouch_copy
