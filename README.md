@@ -1,6 +1,6 @@
 Project
 --------
-Use of Emojis in Tweets During 2016 USA Elections
+Use of Emojis in Tweets During 2016 USA Elections      
 *Please see plots directory to see any ideological graphs. Currently the code gives you one graph combining both group.*
 
 Project Discription
