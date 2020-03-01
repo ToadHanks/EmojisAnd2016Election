@@ -76,8 +76,8 @@ data_file_all_anti <- data_file_all_anti %>% dplyr::select(tweet) #%>% dplyr::se
 #-------------------------------------------------------- extract the emojis-----------------------------------------------------
 #this variable is VERY IMPORTANT if you're doing group based analysis comment and uncomment based on your analysis!
 
-#data_context <- data_file$tweet #tweet texts COMBINED analysis!
-data_context <-  data_file_all_pro$tweet #Uncomment this for PRO tweets!
+data_context <- data_file$tweet #tweet texts COMBINED analysis!
+#data_context <-  data_file_all_pro$tweet #Uncomment this for PRO tweets!
 #data_context <- data_file_all_anti$tweet #Uncomment this for ANTI tweets!
 
 dt_result <- gsub("[\\x{0000}-\\x{FFFF}]+","",data_context, perl = TRUE) #Extacts all the unicode from a column
@@ -90,7 +90,8 @@ emoji_pouch_corpus <- emoji_pouch_corpus %>% mutate_all(funs(na_if(., ""))) %>% 
 
 #Manually add the new emojis in this json file. Download it (or push pull request in my github), read it in and same implmenetation.
 
-emoji_json_file <- "https://raw.githubusercontent.com/ToadHanks/emojisLib_json/master/emojis.json"
+#lib comes from Muan
+emoji_json_file <- "https://raw.githubusercontent.com/ToadHanks/urmojis/master/traitslib/in_progress_lib.json"
 json_data <- rjson::fromJSON(paste(readLines(emoji_json_file), collapse = "")) #read line by line make 
 
 #-----------------------------------------------------json function-------------------------------------------------------------
@@ -193,12 +194,12 @@ emoji_pouch_copy[is.na(emoji_pouch_copy)] <- "0" #This makes easy to spot if the
 #Sort of a DRY approach, you have to comment/uncomment relevant variable based on which you using. One has to be commented
 #otherwise they will get overwritten.
 
-pro_emojis <- emoji_pouch_copy
+#pro_emojis <- emoji_pouch_copy
 #anti_emojis <- emoji_pouch_copy
 
 #Similarities between texts (watch for comment and uncomment group tags)
 
-similar_emojis <- data.frame(matches= dplyr::intersect(pro_emojis, anti_emojis))
+#similar_emojis <- data.frame(matches= dplyr::intersect(pro_emojis, anti_emojis))
 #readr::write_excel_csv(similar_emojis,"group_similarity_texts.csv", col_names = T) #similarity files
 
 #Unique emojis between groups
