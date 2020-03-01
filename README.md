@@ -33,5 +33,4 @@ Collaborators
 ---------------
 Dr. Hagen Loni, Assistant Professor, USF  
 Dr. Thomas Keller, Field Researcher, USF  
-Ms. Mary Falling, Masters, USF     
 Mr. William (Alex) Webb, Doctor of Philosophy, USF
