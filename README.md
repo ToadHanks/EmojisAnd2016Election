@@ -15,7 +15,7 @@ Unix Based only! Windows doesn't render the emojis above 0xFFFF.
 
 Status
 -------
-Revision
+Paused (in-revision)
 
 Langauge
 ---------
