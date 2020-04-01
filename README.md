@@ -16,6 +16,7 @@ Unix Based only! Windows doesn't render the emojis above 0xFFFF.
 Status
 -------
 Paused (in-revision)
+Next: Sentiment extraction
 
 Langauge
 ---------
