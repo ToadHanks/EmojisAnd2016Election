@@ -1,6 +1,7 @@
 library(openxlsx)
 library(tidyverse)
 library(utf8splain)
+#WINDOWS COMPATIBLE 
 
 #----------------------------------------------------- emoji dictionary viewer -----------------------------------------------------
 #12.1 is the latest release, 13 is in beta channel (Warnings have been suppressed, they were appearing due to a [safe] workaround)
